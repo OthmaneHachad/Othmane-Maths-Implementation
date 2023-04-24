@@ -25,13 +25,24 @@ class Matrix:
         return self.tab
 
     def __mul__(self, B):
-        assert self.columns == B.rows
-        matrice = [[0 for a in range(B.columns)] for i in range(self.rows)]
-        for r in range(len(matrice)):
-            for i in range(B.columns):
-                for col in range(len(matrice)):
-                    matrice[r][i] += (self.tab[r][col]*B.tab[col][i])
-        return self.__class__(self.rows, B.columns, matrice)
+        if type(B) == int or type(B) == float:
+            matrice = [[0 for a in range(self.columns)] for i in range(self.rows)]
+            for r in range(len(matrice)):
+                for i in range(self.columns):
+                    for col in range(len(matrice)):
+                        matrice[r][i] = self.tab[r][i] * B
+            return self.__class__(self.rows, self.columns, matrice)
+        elif type(B) == Matrix:
+            assert self.columns == B.rows
+            matrice = [[0 for a in range(B.columns)] for i in range(self.rows)]
+            for r in range(len(matrice)):
+                for i in range(B.columns):
+                    for col in range(len(matrice[0])+1):
+                        matrice[r][i] += (self.tab[r][col]*B.tab[col][i])
+                        #result[r][i] += A[r][col] * B[col][i]
+            return self.__class__(self.rows, B.columns, matrice)
+
+
 
     def isIdentite(self):
         assert self.columns == self.rows
@@ -46,6 +57,9 @@ class Matrix:
                         return False
         return True
 
+    def isReversible(self):
+        return self.determinant() != 0
+
     def isCarre(self):
         return self.columns == self.rows
 
@@ -53,47 +67,52 @@ class Matrix:
     def determinant(self):
         # ad - bc
         assert self.isCarre() == True
-        if self.rows == 3:
+        if self.rows == 2:
+            return self.determinant_2_b_2()
+        elif self.rows == 3:
             det = 0
             for i in range(1,4):
-                det = det + (((-1)**(1+i)) * (self.tab[0][i-1]) * (self.co_matrix(i).determinant_2_b_2()))
-            print(det)
+                det = det + (((-1)**(1+i)) * (self.tab[0][i-1]) * (self.co_factor(i).determinant_2_b_2()))
             return det
         else:
             __det = 0 
             for i in range(1,self.columns+1):
-                print(self.co_matrix(i))
-                __det = __det + (((-1)**(1+i)) * (self.tab[0][i-1]) * (self.co_matrix(i).determinant()))
+                print(self.co_factor(i))
+                __det = __det + (((-1)**(1+i)) * (self.tab[0][i-1]) * (self.co_factor(i).determinant()))
             return __det
 
     def determinant_2_b_2(self):
         return ((self.tab[0][0] * self.tab[1][1]) - (self.tab[0][1] * self.tab[1][0]))
 
 
-    def co_matrix(self,n):
+    def co_factor(self,n, row=1):
+        # only for 3x3 Matrix or bigger
         assert self.isCarre() == True
-        assert n > 0
+        #assert n >= 3
         co_tab = copy.deepcopy(self.tab)
-        co_tab.pop(0)
+        co_tab.pop(row-1)
         for i in range(len(co_tab)):
             co_tab[i].pop(n-1)
         return self.__class__(self.rows-1, self.columns-1, co_tab)
 
+    def get_comatrix(self):
+        #chaque element est le determinant du cofacteur a l'indice a,i
+        if self.rows == 2:
+            return self.__class__(self.rows, self.columns, [[self.tab[1][1],self.tab[1][0]*-1],[self.tab[0][1]*-1,self.tab[0][0]]])
+        else:
+            new_tab = [[(self.co_factor(a, i).determinant())*((-1)**(a+i)) for a in range(1, self.columns+1)] for i in range(1, self.rows+1)]
+            return self.__class__(self.rows, self.columns, new_tab)
+        
+    
+    def transpose(self):
+        tab_trans = [[self.tab[i][j] for i in range(self.rows)] for j in range(self.columns)]
+        return self.__class__(self.rows, self.columns, tab_trans)
+
+    def inverse(self):
+        assert self.isReversible() == True
+        print(self.get_comatrix().transpose())
+        tab_inverse = self.get_comatrix().transpose() * (1/self.determinant())
+        return Matrix(self.rows, self.columns, tab_inverse)
+
     def __repr__(self):
         return f'{self.tab}'
-
-
-
-
-
-A = Matrix(3, 3, [[1,2,3],[4,10,0],[3,2,1]])
-B = Matrix(3, 2, [[2,1],[3,7],[3,9]])
-
-C = Matrix(2,2, [[1,2],
-                    [3,4]])
-                    
-D = Matrix(3, 3, [[2,1,1],[3,7,3],[3,9,4]])
-E = Matrix(5, 5, [[0,1,4,5,7],[0,0,3,15,0],[0,0,0,4,9],[2,6,0,5,0],[5,0,67,0,1]])
-
-
-print(D-A)
