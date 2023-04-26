@@ -37,10 +37,15 @@ class Matrix:
             matrice = [[0 for a in range(B.columns)] for i in range(self.rows)]
             for r in range(len(matrice)):
                 for i in range(B.columns):
-                    for col in range(len(matrice[0])+1):
+                    for col in range(len(matrice[0])):
                         matrice[r][i] += (self.tab[r][col]*B.tab[col][i])
                         #result[r][i] += A[r][col] * B[col][i]
             return self.__class__(self.rows, B.columns, matrice)
+
+    def __pow__(self, p):
+        for i in range(p-1):
+            self *= self
+        return self
 
 
 
@@ -116,3 +121,4 @@ class Matrix:
 
     def __repr__(self):
         return f'{self.tab}'
+
